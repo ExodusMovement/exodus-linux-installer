@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # https://www.gnu.org/software/bash/manual/bash.html
-INSTALLER_VERSION=1.0.0
+INSTALLER_VERSION=1.0.1
 
 exodus_download_url() {
   echo 'https://dl.dropboxusercontent.com/u/173974/exodus/release/exodus_linux_'$1'.tar.xz'
