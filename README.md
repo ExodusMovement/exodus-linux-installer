@@ -5,14 +5,14 @@ Script for downloading/installing/uninstalling [Exodus][1] on Linux.
 ## Usage
 
 ```bash
-$ git clone https://github.com/ExodusMovement/exodus-linux-installer.git ~/.exodus-installer
-$ ln -s -f ~/.exodus-installer/exodus-installer.sh ~/.local/bin/exodus-installer
+# wget -O /usr/bin/exodus-installer https://raw.githubusercontent.com/ExodusMovement/exodus-linux-installer/master/exodus-installer.sh
+# chmod +x /usr/bin/exodus-installer
 $ exodus-installer check
 Exodus is not installed.
-$ exodus-installer install 1.4.0
+# exodus-installer install 1.4.0
 $ exodus-installer check
 Exodus is installed. Version: 1.4.0
-$ exodus-installer uninstall
+# exodus-installer uninstall
 ```
 
 # LICENSE
