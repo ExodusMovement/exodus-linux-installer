@@ -37,7 +37,7 @@ exodus_install() {
   update-desktop-database > /dev/null 2>&1
 
   # update icons
-  gtk-update-icon-cache /usr/share/icons/hicolor > /dev/null 2>&1
+  gtk-update-icon-cache /usr/share/icons/hicolor -f > /dev/null 2>&1
 }
 
 exodus_uninstall() {
@@ -51,7 +51,7 @@ exodus_uninstall() {
   update-desktop-database > /dev/null 2>&1
 
   # update icons
-  gtk-update-icon-cache /usr/share/icons/hicolor > /dev/null 2>&1
+  gtk-update-icon-cache /usr/share/icons/hicolor -f > /dev/null 2>&1
 }
 
 exodus_installer() {
