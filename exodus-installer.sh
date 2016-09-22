@@ -40,6 +40,10 @@ exodus_install() {
   gtk-update-icon-cache /usr/share/icons/hicolor -f > /dev/null 2>&1
 }
 
+exodus_is_installed() {
+  which Exodus > /dev/null 2>&1
+}
+
 exodus_uninstall() {
   # remove app files
   rm -f /usr/bin/Exodus
@@ -90,6 +94,12 @@ EOF
         return 127
       fi
 
+      exodus_is_installed
+      if [ $? -eq 0 ]; then
+        >&2 echo 'Exodus already installed.'
+        return 1
+      fi
+
       local EXODUS_PKG
       if [[ $# -eq 1 && -f $1 ]]; then
         EXODUS_PKG=$1
@@ -118,7 +128,7 @@ EOF
         return 127
       fi
 
-      which Exodus > /dev/null 2>&1
+      exodus_is_installed
       if [ $? -eq 1 ]; then
         echo 'Exodus is not installed.'
       else
