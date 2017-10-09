@@ -137,7 +137,7 @@ Example:
 EOF
     ;;
     'install' | 'i' )
-	  if [ $# -ne 1 ]; then
+      if [ $# -ne 1 ]; then
         >&2 $0 --help
         return 127
       fi
@@ -147,18 +147,18 @@ EOF
         return 1
       fi
 
-	  local EXODUS_PKG
+      local EXODUS_PKG
       if [[ $# -eq 1 && -f $1 ]]; then
         EXODUS_PKG=$1
       else
-		local EXODUS_FILENAME=`exodus_filename $1`
-		EXODUS_PKG=`exodus_download_target ${EXODUS_FILENAME}`
-		local EXODUS_URL=`exodus_download_url ${EXODUS_FILENAME}`
-		exodus_download $EXODUS_URL $EXODUS_PKG
-	  fi
+        local EXODUS_FILENAME=`exodus_filename $1`
+        EXODUS_PKG=`exodus_download_target ${EXODUS_FILENAME}`
+        local EXODUS_URL=`exodus_download_url ${EXODUS_FILENAME}`
+        exodus_download $EXODUS_URL $EXODUS_PKG
+      fi
 
       if ! unzip -t $EXODUS_PKG > /dev/null; then
-      	echo "$EXODUS_PKG is a corrupt file! Please remove and redownload!"
+        echo "$EXODUS_PKG is a corrupt file! Please remove and redownload!"
         return 1
       fi
 
