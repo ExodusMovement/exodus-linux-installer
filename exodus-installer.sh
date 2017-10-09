@@ -79,7 +79,7 @@ exodus_is_installed() {
 exodus_uninstall() {
   # remove app files
   rm -f  /usr/bin/Exodus${EDEN_BIN_SUFFIX}
-  rm -rf /opt/exodus
+  rm -rf /opt/exodus${EDEN_DOWNLOAD_INFIX}
   rm -f  /usr/share/applications/Exodus${EDEN_BIN_SUFFIX}.desktop
   find /usr/share/icons/hicolor/ -type f -name *Exodus.png -delete
 
