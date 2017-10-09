@@ -40,7 +40,7 @@ exodus_download_url() {
 #
 exodus_download_target() {
   mkdir -p $HOME/Downloads
-  echo $HOME'/Downloads/exodus_linux_'$1'.zip'
+  echo $HOME'/Downloads/'$1
 }
 
 
@@ -79,9 +79,9 @@ exodus_is_installed() {
 #
 exodus_uninstall() {
   # remove app files
-  rm -f /usr/bin/Exodus
+  rm -f /usr/bin/Exodus${EDEN_BIN_SUFFIX}
   rm -rf /opt/exodus
-  rm -f /usr/share/applications/Exodus.desktop
+  rm -f /usr/share/applications/Exodus${EDEN_BIN_SUFFIX}.desktop
   find /usr/share/icons/hicolor/ -type f -name *Exodus.png -delete
 
   # drop exodus://
@@ -148,15 +148,18 @@ EOF
         return 1
       fi
 
-      local EXODUS_PKG
+	  local EXODUS_PKG
       if [[ $# -eq 1 && -f $1 ]]; then
         EXODUS_PKG=$1
       else
-        local EXODUS_FILENAME=`exodus_filename $1`
-        EXODUS_PKG=`exodus_download_target ${EXODUS_FILENAME}`
-        local EXODUS_URL=`exodus_download_url ${EXODUS_FILENAME}`
-        exodus_download $EXODUS_URL $EXODUS_PKG
-      fi
+		local EXODUS_FILENAME=`exodus_filename $1`
+		EXODUS_PKG=`exodus_download_target ${EXODUS_FILENAME}`
+		local EXODUS_URL=`exodus_download_url ${EXODUS_FILENAME}`
+		exodus_download $EXODUS_URL $EXODUS_PKG
+        if [ $? -ne 0 ]; then
+          return 1
+        fi
+	  fi
 
       if ! unzip -t $EXODUS_PKG > /dev/null; then
         echo "$EXODUS_PKG is a corrupt file! Please remove and redownload!"
