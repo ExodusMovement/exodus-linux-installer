@@ -143,7 +143,7 @@ EOF
       fi
 
       if exodus_is_installed; then
-        >&2 echo 'Exodus already installed.'
+        >&2 echo 'Exodus'${EDEN_BIN_SUFFIX}' already installed.'
         return 1
       fi
 
