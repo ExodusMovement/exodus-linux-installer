@@ -39,6 +39,7 @@ exodus_download_url() {
 # Generate the download target on disk
 #
 exodus_download_target() {
+  mkdir -p $HOME/Downloads
   echo $HOME'/Downloads/'$1
 }
 
@@ -78,9 +79,9 @@ exodus_is_installed() {
 #
 exodus_uninstall() {
   # remove app files
-  rm -f  /usr/bin/Exodus${EDEN_BIN_SUFFIX}
+  rm -f /usr/bin/Exodus${EDEN_BIN_SUFFIX}
   rm -rf /opt/exodus${EDEN_DOWNLOAD_INFIX}
-  rm -f  /usr/share/applications/Exodus${EDEN_BIN_SUFFIX}.desktop
+  rm -f /usr/share/applications/Exodus${EDEN_BIN_SUFFIX}.desktop
   find /usr/share/icons/hicolor/ -type f -name *Exodus.png -delete
 
   # drop exodus://
@@ -116,7 +117,7 @@ exodus_installer() {
   COMMAND=$1
   shift
 
-  case $COMMAND in 
+  case $COMMAND in
     'help' | '--help' )
       cat << EOF
 
@@ -155,6 +156,9 @@ EOF
         EXODUS_PKG=`exodus_download_target ${EXODUS_FILENAME}`
         local EXODUS_URL=`exodus_download_url ${EXODUS_FILENAME}`
         exodus_download $EXODUS_URL $EXODUS_PKG
+        if [ $? -ne 0 ]; then
+          return 1
+        fi
       fi
 
       if ! unzip -t $EXODUS_PKG > /dev/null; then
@@ -210,5 +214,3 @@ EOF
 # pass arguments to main function
 #
 exodus_installer $@
-
-# vim: ts=4 sw=2
