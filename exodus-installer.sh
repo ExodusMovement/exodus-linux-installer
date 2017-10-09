@@ -1,23 +1,25 @@
 #!/usr/bin/env bash
 
 # https://www.gnu.org/software/bash/manual/bash.html
-INSTALLER_VERSION=1.0.2
+INSTALLER_VERSION=1.0.3
 
 exodus_download_url() {
-  echo 'https://dl.dropboxusercontent.com/u/173974/exodus/release/exodus_linux_'$1'.tar.xz'
+  echo 'https://exodusbin.azureedge.net/releases/exodus-linux-x64-'$1'.zip'
 }
 
 exodus_download_target() {
-  echo $HOME'/Downloads/exodus_linux_'$1'.tar.xz'
+  mkdir -p $HOME/Downloads
+  echo $HOME'/Downloads/exodus_linux_'$1'.zip'
 }
 
 exodus_download() {
-  if [ -e $2 ]; then
+  if [ -e $2 ];
+  then
     echo $2' already exists, overwrite it?'
     select yn in 'Yes' 'No'; do
       case $yn in
         'Yes' )
-          wget -v -o $2 $1
+          wget -v -O $2 $1
           break
         ;;
         'No' )
@@ -25,12 +27,16 @@ exodus_download() {
         ;;
       esac
     done
-  fi 
+  else
+    wget -v -O $2 $1
+  fi
 }
 
 exodus_install() {
   # extract files & create link
-  xz -dkfc $1 | tar -x -C /
+  #xz -dkfc $1 | tar -x -C /
+  unzip -d /opt/ $1
+  mv /opt/Exodus-linux-* /opt/exodus
   ln -s -f /opt/exodus/Exodus /usr/bin/Exodus
 
   # register exodus://
@@ -68,7 +74,7 @@ exodus_installer() {
   COMMAND=$1
   shift
 
-  case $COMMAND in 
+  case $COMMAND in
     'help' | '--help' )
       cat << EOF
 
@@ -83,8 +89,8 @@ Usage:
 
 Example:
 
-  $0 install ~/Downloads/exodus_linux_1.4.0.tar.xz   Install Exodus 1.4.0 from file
-  $0 install 1.4.0                                   Download and install Exodus 1.4.0
+  $0 install ~/Downloads/exodus_linux_1.4.0.zip   Install Exodus 1.4.0 from file
+  $0 install 1.4.0                                Download and install Exodus 1.4.0
 
 EOF
     ;;
@@ -106,9 +112,12 @@ EOF
       else
         EXODUS_PKG=`exodus_download_target $1`
         exodus_download `exodus_download_url $1` $EXODUS_PKG
+        if [ $? -ne 0 ]; then
+          return 1
+        fi
       fi
 
-      xz -t $EXODUS_PKG
+      unzip -t $EXODUS_PKG
       if [ $? -ne 0 ]; then
         return 1
       fi
