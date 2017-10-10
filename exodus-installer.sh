@@ -1,43 +1,64 @@
 #!/usr/bin/env bash
-
+#
+# Open source, released under the MIT license (see LICENSE file).
+#
 # https://www.gnu.org/software/bash/manual/bash.html
-INSTALLER_VERSION=1.0.3
+#
+# Link this file so that `-eden` appears in the name, and the Eden version
+# will be installed.
+#
 
-exodus_download_url() {
-  echo 'https://exodusbin.azureedge.net/releases/exodus-linux-x64-'$1'.zip'
+# Global variables
+#
+INSTALLER_VERSION=1.0.4
+PROCESSOR="x64"
+#
+# Check for eden suffix in name of script. If detected, download the Eden version instead.
+#
+if [[ $0 =~ .*-eden.* ]]; then
+  EDEN_DOWNLOAD_INFIX=-eden
+  EDEN_BIN_SUFFIX=Eden
+fi
+
+
+# Generate a base file name, with eden infix, processor and version.
+#
+exodus_filename() {
+  echo 'exodus'${EDEN_DOWNLOAD_INFIX}'-linux-'${PROCESSOR}'-'$1'.zip'
 }
 
+
+# Generate the download URL
+# This can change, so we have to make sure this is "up to date"
+#
+exodus_download_url() {
+  echo 'https://exodusbin.azureedge.net/releases/'$1
+}
+
+
+# Generate the download target on disk
+#
 exodus_download_target() {
   mkdir -p $HOME/Downloads
-  echo $HOME'/Downloads/exodus_linux_'$1'.zip'
+  echo $HOME'/Downloads/'$1
 }
 
+
+# Download the Exodus payload from the server, but only
+# download if we don't have it on disk already (-c option)
+#
 exodus_download() {
-  if [ -e $2 ];
-  then
-    echo $2' already exists, overwrite it?'
-    select yn in 'Yes' 'No'; do
-      case $yn in
-        'Yes' )
-          wget -v -O $2 $1
-          break
-        ;;
-        'No' )
-          break
-        ;;
-      esac
-    done
-  else
-    wget -v -O $2 $1
-  fi
+  wget -v -c -O $2 $1
 }
 
+
+# Install the exodus package to the /opt folder
+#
 exodus_install() {
   # extract files & create link
-  #xz -dkfc $1 | tar -x -C /
   unzip -d /opt/ $1
-  mv /opt/Exodus-linux-* /opt/exodus
-  ln -s -f /opt/exodus/Exodus /usr/bin/Exodus
+  mv /opt/Exodus${EDEN_BIN_SUFFIX}-linux-* /opt/exodus${EDEN_DOWNLOAD_INFIX}
+  ln -s -f /opt/exodus${EDEN_DOWNLOAD_INFIX}/Exodus${EDEN_BIN_SUFFIX} /usr/bin/Exodus${EDEN_BIN_SUFFIX}
 
   # register exodus://
   update-desktop-database > /dev/null 2>&1
@@ -46,15 +67,21 @@ exodus_install() {
   gtk-update-icon-cache /usr/share/icons/hicolor -f > /dev/null 2>&1
 }
 
+
+# Check to see if Exodus is installed
+#
 exodus_is_installed() {
-  which Exodus > /dev/null 2>&1
+  which Exodus${EDEN_BIN_SUFFIX} > /dev/null 2>&1
 }
 
+
+# Uninstall the application completely
+#
 exodus_uninstall() {
   # remove app files
-  rm -f /usr/bin/Exodus
-  rm -rf /opt/exodus
-  rm -f /usr/share/applications/Exodus.desktop
+  rm -f /usr/bin/Exodus${EDEN_BIN_SUFFIX}
+  rm -rf /opt/exodus${EDEN_DOWNLOAD_INFIX}
+  rm -f /usr/share/applications/Exodus${EDEN_BIN_SUFFIX}.desktop
   find /usr/share/icons/hicolor/ -type f -name *Exodus.png -delete
 
   # drop exodus://
@@ -64,6 +91,22 @@ exodus_uninstall() {
   gtk-update-icon-cache /usr/share/icons/hicolor -f > /dev/null 2>&1
 }
 
+
+# Do the actual installation procedure, calling the above functions when needed.
+#
+# This function detects the command line arguments and verifies they are correct.
+# Then each case is run according to the arguments. What this does is:
+#
+# 1) download the version specified from Exodus' servers (if version specified
+#                                                         otherwise, use supplied filename)
+# 2) check the integrity of the archive
+# 3) check for root privileges (use sudo)
+# 4) install the app
+#
+# Or, we can uninstall the app from the harddrive (root privs needed)
+#
+# Or, we can check to see if Exodus is installed.
+#
 exodus_installer() {
   if [ $# -lt 1 ]; then
     $0 --help
@@ -100,9 +143,8 @@ EOF
         return 127
       fi
 
-      exodus_is_installed
-      if [ $? -eq 0 ]; then
-        >&2 echo 'Exodus already installed.'
+      if exodus_is_installed; then
+        >&2 echo 'Exodus'${EDEN_BIN_SUFFIX}' already installed.'
         return 1
       fi
 
@@ -110,15 +152,17 @@ EOF
       if [[ $# -eq 1 && -f $1 ]]; then
         EXODUS_PKG=$1
       else
-        EXODUS_PKG=`exodus_download_target $1`
-        exodus_download `exodus_download_url $1` $EXODUS_PKG
+        local EXODUS_FILENAME=`exodus_filename $1`
+        EXODUS_PKG=`exodus_download_target ${EXODUS_FILENAME}`
+        local EXODUS_URL=`exodus_download_url ${EXODUS_FILENAME}`
+        exodus_download $EXODUS_URL $EXODUS_PKG
         if [ $? -ne 0 ]; then
           return 1
         fi
       fi
 
-      unzip -t $EXODUS_PKG
-      if [ $? -ne 0 ]; then
+      if ! unzip -t $EXODUS_PKG > /dev/null; then
+        echo "$EXODUS_PKG is a corrupt file! Please remove and redownload!"
         return 1
       fi
 
@@ -139,9 +183,9 @@ EOF
 
       exodus_is_installed
       if [ $? -eq 1 ]; then
-        echo 'Exodus is not installed.'
+        echo 'Exodus'${EDEN_BIN_SUFFIX}' is not installed.'
       else
-        echo 'Exodus is installed. Version: '`Exodus --version`
+        echo 'Exodus'${EDEN_BIN_SUFFIX}' is installed. Version: '`Exodus${EDEN_BIN_SUFFIX} --version`
       fi
     ;;
     'uninstall' )
@@ -166,5 +210,7 @@ EOF
   esac
 }
 
+
 # pass arguments to main function
+#
 exodus_installer $@
