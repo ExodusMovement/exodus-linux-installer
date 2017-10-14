@@ -21,6 +21,11 @@ if [[ $0 =~ .*-eden.* ]]; then
 fi
 
 
+if [ $EUID -ne 0 ]; then
+  SUDO=sudo
+fi
+
+
 # Generate a base file name, with eden infix, processor and version.
 #
 exodus_filename() {
@@ -52,19 +57,46 @@ exodus_download() {
 }
 
 
+# Download and check the exodus package to verify
+# SHA hash
+exodus_verify_hashes() {
+  #
+  # If JP's key doesn't exist...
+  if ! gpg -k | grep -q "JP Richardson" ; then 
+    jpKey='https://keybase.io/jprichardson/pgp_keys.asc?fingerprint=12408650e2192febe4e7024c9d959455325b781a'
+    # ...Import JP Richardson's Public Key
+    curl -s $jpKey | gpg --import -q
+  fi
+
+  local HASHES=`exodus_download_url hashes-exodus${EDEN_DOWNLOAD_INFIX}-$1.txt`
+  curl -s $HASHES | gpg --verify
+  if ! [ $? -eq 0 ]; then
+    return 1
+  fi
+  from_hash=`curl -s $HASHES | grep linux | perl -lane 'print $F[0]'`
+  to_hash=`shasum -a 256 $2 | perl -lane 'print $F[0]'`
+  test "$from_hash" == "$to_hash"
+  return $?
+}
+
+
 # Install the exodus package to the /opt folder
 #
 exodus_install() {
+  if [ "$SUDO" != "" ]; then
+    echo "Running commands with SUDO..."
+  fi
+
   # extract files & create link
-  unzip -d /opt/ $1
-  mv /opt/Exodus${EDEN_BIN_SUFFIX}-linux-* /opt/exodus${EDEN_DOWNLOAD_INFIX}
-  ln -s -f /opt/exodus${EDEN_DOWNLOAD_INFIX}/Exodus${EDEN_BIN_SUFFIX} /usr/bin/Exodus${EDEN_BIN_SUFFIX}
+  $SUDO unzip -d /opt/ $1
+  $SUDO mv /opt/Exodus${EDEN_BIN_SUFFIX}-linux-* /opt/exodus${EDEN_DOWNLOAD_INFIX}
+  $SUDO ln -s -f /opt/exodus${EDEN_DOWNLOAD_INFIX}/Exodus${EDEN_BIN_SUFFIX} /usr/bin/Exodus${EDEN_BIN_SUFFIX}
 
   # register exodus://
-  update-desktop-database > /dev/null 2>&1
+  $SUDO update-desktop-database > /dev/null 2>&1
 
   # update icons
-  gtk-update-icon-cache /usr/share/icons/hicolor -f > /dev/null 2>&1
+  $SUDO gtk-update-icon-cache /usr/share/icons/hicolor -f > /dev/null 2>&1
 }
 
 
@@ -78,17 +110,21 @@ exodus_is_installed() {
 # Uninstall the application completely
 #
 exodus_uninstall() {
+  if [ "$SUDO" != "" ]; then
+    echo "Running commands with SUDO..."
+  fi
+
   # remove app files
-  rm -f /usr/bin/Exodus${EDEN_BIN_SUFFIX}
-  rm -rf /opt/exodus${EDEN_DOWNLOAD_INFIX}
-  rm -f /usr/share/applications/Exodus${EDEN_BIN_SUFFIX}.desktop
-  find /usr/share/icons/hicolor/ -type f -name *Exodus.png -delete
+  $SUDO rm -f /usr/bin/Exodus${EDEN_BIN_SUFFIX}
+  $SUDO rm -rf /opt/exodus${EDEN_DOWNLOAD_INFIX}
+  $SUDO rm -f /usr/share/applications/Exodus${EDEN_BIN_SUFFIX}.desktop
+  $SUDO find /usr/share/icons/hicolor/ -type f -name *Exodus.png -delete
 
   # drop exodus://
-  update-desktop-database > /dev/null 2>&1
+  $SUDO update-desktop-database > /dev/null 2>&1
 
   # update icons
-  gtk-update-icon-cache /usr/share/icons/hicolor -f > /dev/null 2>&1
+  $SUDO gtk-update-icon-cache /usr/share/icons/hicolor -f > /dev/null 2>&1
 }
 
 
@@ -161,14 +197,13 @@ EOF
         fi
 	  fi
 
-      if ! unzip -t $EXODUS_PKG > /dev/null; then
-        echo "$EXODUS_PKG is a corrupt file! Please remove and redownload!"
+      if ! exodus_verify_hashes $1 $EXODUS_PKG; then
+        echo "$EXODUS_PKG has failed the hashing checksum! Aborting installation!"
         return 1
       fi
 
-      if [ $EUID -ne 0 ]; then
-        >&2 echo 'Root privileges required...'
-        >&2 echo '  sudo' $0 'install' $@
+      if ! unzip -t $EXODUS_PKG > /dev/null; then
+        echo "$EXODUS_PKG failed the SHA check, and is a corrupt file! Please remove and redownload!"
         return 1
       fi
 
@@ -194,12 +229,6 @@ EOF
         return 127
       fi
 
-      if [ $EUID -ne 0 ]; then
-        >&2 echo 'Root privileges required...'
-        >&2 echo '  sudo' $0 'install' $@
-        return 1
-      fi
-
       exodus_uninstall
       return $?
     ;;
@@ -214,3 +243,5 @@ EOF
 # pass arguments to main function
 #
 exodus_installer $@
+
+# vim: ts=2 sw=2 et
