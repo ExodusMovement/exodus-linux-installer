@@ -58,7 +58,7 @@ exodus_download() {
 
 
 # Download and check the exodus package to verify
-# SHA hash
+# SHA hash. Shamelessly stolen from https://github.com/kklash/exodus_tools
 exodus_verify_hashes() {
   #
   # If JP's key doesn't exist...
@@ -184,18 +184,17 @@ EOF
         return 1
       fi
 
-	  local EXODUS_PKG
+      local EXODUS_PKG
       if [[ $# -eq 1 && -f $1 ]]; then
         EXODUS_PKG=$1
       else
-		local EXODUS_FILENAME=`exodus_filename $1`
-		EXODUS_PKG=`exodus_download_target ${EXODUS_FILENAME}`
-		local EXODUS_URL=`exodus_download_url ${EXODUS_FILENAME}`
-		exodus_download $EXODUS_URL $EXODUS_PKG
-        if [ $? -ne 0 ]; then
+        local EXODUS_FILENAME=`exodus_filename $1`
+        EXODUS_PKG=`exodus_download_target ${EXODUS_FILENAME}`
+        local EXODUS_URL=`exodus_download_url ${EXODUS_FILENAME}`
+        if ! exodus_download $EXODUS_URL $EXODUS_PKG; then
           return 1
         fi
-	  fi
+      fi
 
       if ! exodus_verify_hashes $1 $EXODUS_PKG; then
         echo "$EXODUS_PKG has failed the hashing checksum! Aborting installation!"
@@ -216,11 +215,10 @@ EOF
         return 127
       fi
 
-      exodus_is_installed
-      if [ $? -eq 1 ]; then
-        echo 'Exodus'${EDEN_BIN_SUFFIX}' is not installed.'
-      else
+      if exodus_is_installed; then
         echo 'Exodus'${EDEN_BIN_SUFFIX}' is installed. Version: '`Exodus${EDEN_BIN_SUFFIX} --version`
+      else
+        echo 'Exodus'${EDEN_BIN_SUFFIX}' is not installed.'
       fi
     ;;
     'uninstall' )
