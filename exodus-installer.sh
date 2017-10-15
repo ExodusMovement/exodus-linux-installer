@@ -20,11 +20,9 @@ if [[ $0 =~ .*-eden.* ]]; then
   EDEN_BIN_SUFFIX=Eden
 fi
 
-
 if [ $EUID -ne 0 ]; then
   SUDO=sudo
 fi
-
 
 # Generate a base file name, with eden infix, processor and version.
 #
