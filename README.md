@@ -9,9 +9,9 @@ Script for downloading/installing/uninstalling [Exodus][1] on Linux.
 # chmod +x /usr/bin/exodus-installer
 $ exodus-installer check
 Exodus is not installed.
-# exodus-installer install 1.4.0
+# exodus-installer install 1.40.0
 $ exodus-installer check
-Exodus is installed. Version: 1.4.0
+Exodus is installed. Version: 1.40.0
 # exodus-installer uninstall
 ```
 
